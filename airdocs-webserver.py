@@ -23,6 +23,7 @@ Send a POST request:
 import argparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
+from datetime import datetime
 
 
 class S(BaseHTTPRequestHandler):
@@ -50,7 +51,9 @@ class S(BaseHTTPRequestHandler):
         content_len = int(self.headers.get('Content-Length'))
         post_body = self.rfile.read(content_len)
         parsed = json.loads(post_body)
-        print(json.dumps(parsed, indent=4, sort_keys=True))
+        print(json.dumps(parsed, indent=4, sort_keys=False))
+        with open(get_time(), 'w') as json_file:
+                json.dump(parsed, json_file, indent=4)
         self._set_headers()
         self.wfile.write(self._html("Successful POST"))
 
@@ -61,6 +64,12 @@ def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000):
 
     print(f"Starting httpd server on {addr}:{port}")
     httpd.serve_forever()
+
+def get_time():
+    now = datetime.now()
+    dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
+    print("date and time =", dt_string)
+    return dt_string+".json"
 
 
 if __name__ == "__main__":
