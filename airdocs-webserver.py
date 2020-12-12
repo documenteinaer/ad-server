@@ -4,20 +4,9 @@ Very simple HTTP server in python (Updated for Python 3.7)
 
 Usage:
 
-    ./dummy-web-server.py -h
     ./dummy-web-server.py -l localhost -p 8000
+    ./dummy-web-server.py -l localhost -p 8000 -o file.json
 
-Send a GET request:
-
-    curl http://localhost:8000
-
-Send a HEAD request:
-
-    curl -I http://localhost:8000
-
-Send a POST request:
-
-    curl -d "foo=bar&bin=baz" http://localhost:8000
 
 """
 import argparse
@@ -51,14 +40,15 @@ class S(BaseHTTPRequestHandler):
         content_len = int(self.headers.get('Content-Length'))
         post_body = self.rfile.read(content_len)
         parsed = json.loads(post_body)
-        print(json.dumps(parsed, indent=4, sort_keys=False))
-        with open(get_time(), 'w') as json_file:
-                json.dump(parsed, json_file, indent=4)
+        print_json(parsed)
+        write_json_to_file(parsed)
         self._set_headers()
         self.wfile.write(self._html("Successful POST"))
 
 
-def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000):
+def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000, file=""):
+    if file!=None:
+        open_json(file)
     server_address = (addr, port)
     httpd = server_class(server_address, handler_class)
 
@@ -70,6 +60,19 @@ def get_time():
     dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
     print("date and time =", dt_string)
     return dt_string+".json"
+
+def open_json(file):
+    f = open(file,)
+    data = json.load(f)
+    print_json(data)
+    f.close()
+
+def print_json(data):
+    print(json.dumps(data, indent=4, sort_keys=False))
+
+def write_json_to_file(data):
+    with open(get_time(), 'w') as json_file:
+                json.dump(data, json_file, indent=4)
 
 
 if __name__ == "__main__":
@@ -88,5 +91,11 @@ if __name__ == "__main__":
         default=8000,
         help="Specify the port on which the server listens",
     )
+    parser.add_argument(
+        "-f",
+        "--file",
+        help="Specify the json file",
+        required=False,
+    )
     args = parser.parse_args()
-    run(addr=args.listen, port=args.port)
+    run(addr=args.listen, port=args.port, file=args.file)
