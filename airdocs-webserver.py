@@ -1,18 +1,12 @@
 #!/usr/bin/env python
-"""
-Very simple HTTP server in python (Updated for Python 3.7)
 
-Usage:
-
-    ./dummy-web-server.py -l localhost -p 8000
-    ./dummy-web-server.py -l localhost -p 8000 -o file.json
-
-
-"""
 import argparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 from datetime import datetime
+from os import listdir
+import os.path
+from os.path import isfile, join
 
 
 class S(BaseHTTPRequestHandler):
@@ -46,9 +40,11 @@ class S(BaseHTTPRequestHandler):
         self.wfile.write(self._html("Successful POST"))
 
 
-def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000, file=""):
+def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000, file=None, dir=None):
     if file!=None:
         open_json(file)
+    if dir!=None:
+        open_dir(dir)
     server_address = (addr, port)
     httpd = server_class(server_address, handler_class)
 
@@ -62,10 +58,12 @@ def get_time():
     return dt_string+".json"
 
 def open_json(file):
-    f = open(file,)
-    data = json.load(f)
-    print_json(data)
-    f.close()
+    extension = os.path.splitext(file)[1][1:]
+    if (extension == "json"):
+        f = open(file,)
+        data = json.load(f)
+        print_json(data)
+        f.close()
 
 def print_json(data):
     print(json.dumps(data, indent=4, sort_keys=False))
@@ -74,6 +72,12 @@ def write_json_to_file(data):
     with open(get_time(), 'w') as json_file:
                 json.dump(data, json_file, indent=4)
 
+def open_dir(mypath):
+    files = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+    for file in files:
+        print(file)
+        filepath = mypath + "/" + file
+        open_json(filepath)
 
 if __name__ == "__main__":
 
@@ -97,5 +101,11 @@ if __name__ == "__main__":
         help="Specify the json file",
         required=False,
     )
+    parser.add_argument(
+        "-d",
+        "--dir",
+        help="Specify directory with json files",
+        required=False,
+    )
     args = parser.parse_args()
-    run(addr=args.listen, port=args.port, file=args.file)
+    run(addr=args.listen, port=args.port, file=args.file, dir=args.dir)
