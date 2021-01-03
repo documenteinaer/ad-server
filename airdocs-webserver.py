@@ -40,11 +40,13 @@ class S(BaseHTTPRequestHandler):
         self.wfile.write(self._html("Successful POST"))
 
 
-def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000, file=None, dir=None):
+def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000, file=None, dir=None, config=None):
     if file!=None:
         open_json(file)
     if dir!=None:
         open_dir(dir)
+    if config!=None:
+        open_config(config)
     server_address = (addr, port)
     httpd = server_class(server_address, handler_class)
 
@@ -60,7 +62,7 @@ def get_time():
 def open_json(file):
     extension = os.path.splitext(file)[1][1:]
     if (extension == "json"):
-        f = open(file,)
+        f = open(file,'r')
         data = json.load(f)
         print_json(data)
         f.close()
@@ -78,6 +80,14 @@ def open_dir(mypath):
         print(file)
         filepath = mypath + "/" + file
         open_json(filepath)
+
+def open_config(config):
+    with open(config, 'r') as fp:
+        line = fp.readline()
+        while line:
+            print("Reading from directory: "+line.strip())
+            open_dir(line.strip())
+            line = fp.readline()
 
 if __name__ == "__main__":
 
@@ -107,5 +117,11 @@ if __name__ == "__main__":
         help="Specify directory with json files",
         required=False,
     )
+    parser.add_argument(
+        "-c",
+        "--config",
+        help="Specify config file",
+        required=False,
+    )
     args = parser.parse_args()
-    run(addr=args.listen, port=args.port, file=args.file, dir=args.dir)
+    run(addr=args.listen, port=args.port, file=args.file, dir=args.dir, config=args.config)
