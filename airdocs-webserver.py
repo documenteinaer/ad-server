@@ -40,11 +40,11 @@ class S(BaseHTTPRequestHandler):
         if (parsed["type"] == "0"):
             self.wfile.write(self._html("Successful Testing"))
         if (parsed["type"] == "1"):
-            #TODO - do something with the received file & fingerprints
+            #TODO - do something with the received file - parsed["documentURL"] & fingerprints - parsed["fingerprints"]
             self.wfile.write(self._html("Successful Sending"))
         if (parsed["type"] == "2"):
-            #TODO - search for file and return the url here
-            self.wfile.write(self._html("Document URL here"))
+            #TODO - use fingerprints - parsed["fingerprints"] to search for file and return the url here
+            self.wfile.write(self._html("New document URL here"))
 
 
 def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000, file=None, dir=None, config=None):
