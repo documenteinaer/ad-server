@@ -34,10 +34,17 @@ class S(BaseHTTPRequestHandler):
         content_len = int(self.headers.get('Content-Length'))
         post_body = self.rfile.read(content_len)
         parsed = json.loads(post_body)
-        print_json(parsed)
-        write_json_to_file(parsed)
+        print_json(parsed) # here we display the whole message
+        write_json_to_file(parsed["fingerprints"]) #write only fingerprints to file
         self._set_headers()
-        self.wfile.write(self._html("Successful POST"))
+        if (parsed["type"] == "0"):
+            self.wfile.write(self._html("Successful Testing"))
+        if (parsed["type"] == "1"):
+            #TODO - do something with the received file & fingerprints
+            self.wfile.write(self._html("Successful Sending"))
+        if (parsed["type"] == "2"):
+            #TODO - search for file and return the url here
+            self.wfile.write(self._html("Document URL here"))
 
 
 def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000, file=None, dir=None, config=None):
@@ -69,6 +76,7 @@ def open_json(file):
 
 def print_json(data):
     print(json.dumps(data, indent=4, sort_keys=False))
+    print("Message type: ", data["type"])
 
 def write_json_to_file(data):
     with open(get_time(), 'w') as json_file:
