@@ -1,4 +1,4 @@
-# Airdocs-server
+# AD-server
 
 ## Help
 
