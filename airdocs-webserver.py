@@ -7,7 +7,10 @@ from datetime import datetime
 from os import listdir
 import os.path
 from os.path import isfile, join
+import shelve
+from compare_signatures import *
 
+db_name = "airdocs"
 
 class S(BaseHTTPRequestHandler):
     def _set_headers(self):
@@ -31,25 +34,64 @@ class S(BaseHTTPRequestHandler):
         self._set_headers()
 
     def do_POST(self):
+        db = shelve.open(db_name, writeback=True)
         content_len = int(self.headers.get('Content-Length'))
         post_body = self.rfile.read(content_len)
         parsed = json.loads(post_body)
-        print_json(parsed) # here we display the whole message
-        write_json_to_file(parsed["fingerprints"]) #write only fingerprints to file
+#         print_json(parsed) # here we display the whole message
+#         write_json_to_file(parsed["fingerprints"]) #write only fingerprints to file
         self._set_headers()
+
+        # Test
         if (parsed["type"] == "0"):
             self.wfile.write(self._html("Successful Testing"))
+            print(parsed["fingerprints"])
+
+        # Add document to Database
         if (parsed["type"] == "1"):
             #TODO - do something with the received file - parsed["documentURL"] & fingerprints - parsed["fingerprints"]
             self.wfile.write(self._html("Successful Sending"))
+            signature = parsed["fingerprints"]
+            signature = signature[list(signature.keys())[0]]
+            document = parsed["document"]
+            try:
+                db["document"+str(db['count'])] = {}
+                db["document"+str(db['count'])]["document"] = document
+#                 for c in signature:
+#                     precalculate_fingerprints(signature[c])
+#                     print(signature)
+                db["document"+str(db['count'])]["signature"] = signature
+            finally:
+                db["count"] += 1
+
+        # Search for documents
         if (parsed["type"] == "2"):
             #TODO - use fingerprints - parsed["fingerprints"] to search for file and return the url here
-            self.wfile.write(self._html("New document URL here"))
+            response = {}
+            self.wfile.write(self._html("New document URL here111"))
+            q_signature = parsed["fingerprints"]
+            q_signature = q_signature[list(q_signature.keys())[0]]
+
+            precalculate_fingerprints(q_signature)
+            for d in db:
+                if "document" in d:
+                    precalculate_fingerprints(db[d]["signature"])
+#                     print(compare_fingerprints(q_signature, db[d]["signature"]))
+                    response[d] = {"similarity": compare_fingerprints(q_signature, db[d]["signature"]),
+                                 "document" : db[d]["document"],
+                                 "description": db[d]["signature"]["comment"]}
 
 
-def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000, file=None, dir=None, config=None):
-    if file!=None:
-        open_json(file)
+            print(response)
+
+
+
+def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000, filename=None, dir=None, config=None):
+    db = shelve.open(db_name)
+    if not "count" in db:
+        db["count"] = 0
+    if filename!=None:
+        open_json(filename)
     if dir!=None:
         open_dir(dir)
     if config!=None:
@@ -66,10 +108,10 @@ def get_time():
     print("date and time =", dt_string)
     return dt_string+".json"
 
-def open_json(file):
-    extension = os.path.splitext(file)[1][1:]
+def open_json(filename):
+    extension = os.path.splitext(filename)[1][1:]
     if (extension == "json"):
-        f = open(file,'r')
+        f = open(filename,'r')
         data = json.load(f)
         print_json(data)
         f.close()
@@ -132,4 +174,4 @@ if __name__ == "__main__":
         required=False,
     )
     args = parser.parse_args()
-    run(addr=args.listen, port=args.port, file=args.file, dir=args.dir, config=args.config)
+    run(addr=args.listen, port=args.port, filename=args.file, dir=args.dir, config=args.config)
