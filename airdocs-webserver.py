@@ -76,20 +76,21 @@ class S(BaseHTTPRequestHandler):
             for d in db:
                 if "document" in d:
                     precalculate_fingerprints(db[d]["signature"])
-#                     print(compare_fingerprints(q_signature, db[d]["signature"]))
                     response[d] = {"similarity": compare_fingerprints(q_signature, db[d]["signature"]),
                                  "document" : db[d]["document"],
                                  "description": db[d]["signature"]["comment"]}
 
-
             print(response)
+            self.wfile.write(json.dumps(response).encode(encoding='utf_8'))
+        db.close()
 
 
 
 def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000, filename=None, dir=None, config=None):
-    db = shelve.open(db_name)
-    if not "count" in db:
-        db["count"] = 0
+    db = shelve.open(db_name, writeback = True)
+    if not 'count' in db:
+        db['count'] = 0
+        db.close()
     if filename!=None:
         open_json(filename)
     if dir!=None:
@@ -99,7 +100,7 @@ def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000, f
     server_address = (addr, port)
     httpd = server_class(server_address, handler_class)
 
-    print(f"Starting httpd server on {addr}:{port}")
+    print("Starting httpd server on {addr}:{port}")
     httpd.serve_forever()
 
 def get_time():
