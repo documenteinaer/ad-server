@@ -68,7 +68,7 @@ class S(BaseHTTPRequestHandler):
         if (parsed["type"] == "2"):
             #TODO - use fingerprints - parsed["fingerprints"] to search for file and return the url here
             response = {}
-            self.wfile.write(self._html("New document URL here111"))
+            #self.wfile.write(self._html("New document URL here111"))
             q_signature = parsed["fingerprints"]
             q_signature = q_signature[list(q_signature.keys())[0]]
 
