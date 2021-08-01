@@ -43,12 +43,12 @@ class S(BaseHTTPRequestHandler):
         self._set_headers()
 
         # Test
-        if (parsed["type"] == "0"):
+        if (parsed["type"] == "TEST"):
             self.wfile.write(self._html("Successful Testing"))
             print(parsed["fingerprints"])
 
         # Add document to Database
-        if (parsed["type"] == "1"):
+        if (parsed["type"] == "POST"):
             #TODO - do something with the received file - parsed["documentURL"] & fingerprints - parsed["fingerprints"]
             self.wfile.write(self._html("Successful Sending"))
             signature = parsed["fingerprints"]
@@ -65,7 +65,7 @@ class S(BaseHTTPRequestHandler):
                 db["count"] += 1
 
         # Search for documents
-        if (parsed["type"] == "2"):
+        if (parsed["type"] == "SEARCH"):
             #TODO - use fingerprints - parsed["fingerprints"] to search for file and return the url here
             response = {}
             #self.wfile.write(self._html("New document URL here111"))
