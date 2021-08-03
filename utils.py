@@ -1,6 +1,6 @@
 import csv
 import sys
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from scipy.spatial.distance import euclidean
 from scipy.spatial.distance import cosine
 from scipy.spatial.distance import cityblock
@@ -16,7 +16,7 @@ import json
 import numpy as np
 import scipy.stats as st
 import random
-import cv2
+#import cv2
 import difflib
 
 
@@ -283,15 +283,16 @@ def similarity_collection_vs_all(json_file, collections, index, method = 'First'
             sorensen_plot.append(braycurtis(tuple(rss_1), tuple(rss_2)))
 
 #     print(sorensen_plot)
-    if label:
-        plt.plot(sorensen_plot, 'o', label = label)
-    else:
-        plt.plot(sorensen_plot, 'o', label = method)
+    if False:
+        if label:
+            plt.plot(sorensen_plot, 'o', label = label)
+        else:
+            plt.plot(sorensen_plot, 'o', label = method)
 
-    plt.xlabel("Nr. crt.")
-    plt.ylabel("Similarity Measurement")
-    plt.legend()
-    plt.show()
+            plt.xlabel("Nr. crt.")
+            plt.ylabel("Similarity Measurement")
+            plt.legend()
+            plt.show()
 
     return result
 
