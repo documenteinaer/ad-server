@@ -55,31 +55,30 @@ class S(BaseHTTPRequestHandler):
             signature = signature[list(signature.keys())[0]]
             document = parsed["document"]
             try:
-                db["document"+str(db['count'])] = {}
-                db["document"+str(db['count'])]["document"] = document
-#                 for c in signature:
-#                     precalculate_fingerprints(signature[c])
-#                     print(signature)
-                db["document"+str(db['count'])]["signature"] = signature
+                db["document"+str(db['count'])] = {"document": document, "signature": signature}
             finally:
                 db["count"] += 1
 
         # Search for documents
         if (parsed["type"] == "SEARCH"):
             #TODO - use fingerprints - parsed["fingerprints"] to search for file and return the url here
-            response = {}
+            response = []
             #self.wfile.write(self._html("New document URL here111"))
             q_signature = parsed["fingerprints"]
             q_signature = q_signature[list(q_signature.keys())[0]]
+            q_sim_threshold = float(parsed["threshold"])
 
             precalculate_fingerprints(q_signature)
             for d in db:
                 if "document" in d:
                     precalculate_fingerprints(db[d]["signature"])
-                    response[d] = {"similarity": compare_fingerprints(q_signature, db[d]["signature"]),
-                                 "document" : db[d]["document"],
-                                 "description": db[d]["signature"]["comment"]}
+                    similarity = compare_fingerprints(q_signature, db[d]["signature"])
+                    if similarity < q_sim_threshold:
+                        response.append({"similarity": similarity,
+                                     "document" : db[d]["document"],
+                                     "description": db[d]["signature"]["comment"]})
 
+            response = sorted(response, key = lambda i: i["similarity"])
             print(response)
             self.wfile.write(json.dumps(response).encode(encoding='utf_8'))
         db.close()
