@@ -2,7 +2,7 @@
 
 import argparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
-import json
+import json, base64
 from datetime import datetime
 from os import listdir
 import os.path
@@ -54,6 +54,13 @@ class S(BaseHTTPRequestHandler):
             signature = parsed["fingerprints"]
             signature = signature[list(signature.keys())[0]]
             document = parsed["document"]
+            if not os.path.exists("img"):
+                os.makedirs("img")
+            if ('image'  in parsed):
+                doc_name = "img/"+document+".jpeg"
+                with open(doc_name, "wb") as fp:
+                    content = base64.b64decode(parsed['image'])
+                    fp.write(content)    
             try:
                 db["document"+str(db['count'])] = {"document": document, "signature": signature}
             finally:
