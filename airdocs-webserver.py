@@ -81,9 +81,22 @@ class S(BaseHTTPRequestHandler):
                     precalculate_fingerprints(db[d]["signature"])
                     similarity = compare_fingerprints(q_signature, db[d]["signature"])
                     if similarity < q_sim_threshold:
-                        response.append({"similarity": similarity,
-                                     "document" : db[d]["document"],
-                                     "description": db[d]["signature"]["comment"]})
+                        document = db[d]["document"]
+                        description = db[d]["signature"]["comment"]
+                        full_path = "img/"+document+".jpeg"
+                        if os.path.exists(full_path):
+                            with open(full_path, "rb") as fp:
+                                file_data = fp.read()
+                                aux = base64.b64encode(file_data);
+                                img_string = aux.decode('utf-8')
+                                response.append({"similarity": similarity,
+                                     "document" : document,
+                                     "description": description,
+                                     "image": img_string})
+                        else:
+                            response.append({"similarity": similarity,
+                                     "document" : document,
+                                     "description": description})
 
             response = sorted(response, key = lambda i: i["similarity"])
             print(response)
