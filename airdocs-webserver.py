@@ -9,6 +9,8 @@ import os.path
 from os.path import isfile, join
 import shelve
 from compare_signatures import *
+import zlib
+import uuid 
 
 db_name = "airdocs"
 
@@ -33,6 +35,15 @@ class S(BaseHTTPRequestHandler):
     def do_HEAD(self):
         self._set_headers()
 
+    def docname(self, signature):
+        # CRC32 produces 32 bit of the entire signature(devID, wifi, gps, ble)
+        crc = zlib.crc32(str(signature).encode())
+        # CRC is padded with zeros in the front, base64 encoded, last 8 characters taken   
+        key = base64.b64encode(bytes(str(crc).rjust(8, '0'), 'ascii')).decode().strip('=+/')[-8:]
+        # 2 random characters (time based)
+        key = key + str(uuid.uuid4())[0:2]
+        return key
+        
     def do_POST(self):
         db = shelve.open(db_name, writeback=True)
         content_len = int(self.headers.get('Content-Length'))
@@ -53,16 +64,19 @@ class S(BaseHTTPRequestHandler):
             self.wfile.write(self._html("Successful Sending"))
             signature = parsed["fingerprints"]
             signature = signature[list(signature.keys())[0]]
-            document = parsed["document"]
-            if not os.path.exists("img"):
-                os.makedirs("img")
-            if ('image'  in parsed):
-                doc_name = "img/"+document+".jpeg"
+            document = os.path.basename(parsed["document"])
+            key = self.docname(signature)
+            if not os.path.exists("storage"):
+                os.makedirs("storage")
+            if ('image' in parsed):
+                os.makedirs("storage/" + key)
+                doc_name = "storage/"+ key + "/" + document+".jpeg"
                 with open(doc_name, "wb") as fp:
                     content = base64.b64decode(parsed['image'])
                     fp.write(content)    
             try:
-                db["document"+str(db['count'])] = {"document": document, "signature": signature}
+                db[key] = {"document": document, "signature": signature}
+                # db["document"+str(db['count'])] = {"document": document, "signature": signature}
             finally:
                 db["count"] += 1
 
@@ -77,13 +91,13 @@ class S(BaseHTTPRequestHandler):
 
             precalculate_fingerprints(q_signature)
             for d in db:
-                if "document" in d:
+                if d != "count":
                     precalculate_fingerprints(db[d]["signature"])
                     similarity = compare_fingerprints(q_signature, db[d]["signature"])
                     if similarity < q_sim_threshold:
                         document = db[d]["document"]
                         description = db[d]["signature"]["comment"]
-                        full_path = "img/"+document+".jpeg"
+                        full_path = "storage/" + d + "/" + document + ".jpeg"
                         if os.path.exists(full_path):
                             with open(full_path, "rb") as fp:
                                 file_data = fp.read()
