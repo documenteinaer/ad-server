@@ -70,7 +70,7 @@ class S(BaseHTTPRequestHandler):
                 os.makedirs("storage")
             if ('image' in parsed):
                 os.makedirs("storage/" + key)
-                doc_name = "storage/"+ key + "/" + document+".jpeg"
+                doc_name = "storage/"+ key + "/" + document
                 with open(doc_name, "wb") as fp:
                     content = base64.b64decode(parsed['image'])
                     fp.write(content)    
@@ -97,7 +97,7 @@ class S(BaseHTTPRequestHandler):
                     if similarity < q_sim_threshold:
                         document = db[d]["document"]
                         description = db[d]["signature"]["comment"]
-                        full_path = "storage/" + d + "/" + document + ".jpeg"
+                        full_path = "storage/" + d + "/" + document
                         if os.path.exists(full_path):
                             with open(full_path, "rb") as fp:
                                 file_data = fp.read()
