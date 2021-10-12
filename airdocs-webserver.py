@@ -11,6 +11,7 @@ import shelve
 from compare_signatures import *
 import zlib
 import uuid 
+import shutil
 
 db_name = "airdocs"
 
@@ -57,6 +58,20 @@ class S(BaseHTTPRequestHandler):
         if (parsed["type"] == "TEST"):
             self.wfile.write(self._html("Successful Testing"))
             print(parsed["fingerprints"])
+
+        # Delete 1 file
+        if (parsed["type"] == "DEL"):
+            self.wfile.write(self._html("Successful Deleting"))
+            id = parsed["id"]
+            print("deleting " + id)
+            del db[id]
+            full_path = "storage/" + id + "/"
+            if os.path.exists(full_path):
+                try:
+                    shutil.rmtree(full_path)
+                except OSError as e:
+                    print("Error: %s - %s." % (e.filename, e.strerror))
+
 
         # Add document to Database
         if (parsed["type"] == "POST"):
@@ -106,6 +121,7 @@ class S(BaseHTTPRequestHandler):
                                 aux = base64.b64encode(file_data);
                                 file_string = aux.decode('utf-8')
                                 response.append({"similarity": similarity,
+                                     "id" : d,
                                      "document" : document,
                                      "description": description,
                                      "file": file_string,
