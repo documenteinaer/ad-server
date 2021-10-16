@@ -60,17 +60,19 @@ class S(BaseHTTPRequestHandler):
             print(parsed["fingerprints"])
 
         # Delete 1 file
-        if (parsed["type"] == "DEL"):
+        if (parsed["type"] == "DELFILE"):
             self.wfile.write(self._html("Successful Deleting"))
             id = parsed["id"]
-            print("deleting " + id)
-            del db[id]
-            full_path = "storage/" + id + "/"
-            if os.path.exists(full_path):
-                try:
-                    shutil.rmtree(full_path)
-                except OSError as e:
-                    print("Error: %s - %s." % (e.filename, e.strerror))
+            devId = db[id]["signature"]["devId"]
+            if (devId == parsed["devid"]):
+                print("deleting " + id)
+                del db[id]
+                full_path = "storage/" + id + "/"
+                if os.path.exists(full_path):
+                    try:
+                        shutil.rmtree(full_path)
+                    except OSError as e:
+                        print("Error: %s - %s." % (e.filename, e.strerror))
 
 
         # Add document to Database
