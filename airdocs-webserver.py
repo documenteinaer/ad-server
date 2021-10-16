@@ -74,6 +74,22 @@ class S(BaseHTTPRequestHandler):
                     except OSError as e:
                         print("Error: %s - %s." % (e.filename, e.strerror))
 
+        # Delete all files from a certain device
+        if (parsed["type"] == "DELALL"):
+            self.wfile.write(self._html("Successful Deleting"))
+            for d in db:
+                if d != "count":
+                    devId = db[d]["signature"]["devId"]
+                    if (devId == parsed["devid"]):
+                        print("deleting " + d)
+                        del db[d]
+                        full_path = "storage/" + d + "/"
+                        if os.path.exists(full_path):
+                            try:
+                                shutil.rmtree(full_path)
+                            except OSError as e:
+                                print("Error: %s - %s." % (e.filename, e.strerror))
+
 
         # Add document to Database
         if (parsed["type"] == "POST"):
