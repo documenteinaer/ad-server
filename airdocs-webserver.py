@@ -146,8 +146,10 @@ class S(BaseHTTPRequestHandler):
                                      "filetype": filetype})
                         else:
                             response.append({"similarity": similarity,
+                                     "id" : d,
                                      "document" : document,
-                                     "description": description})
+                                     "description": description,
+                                     "filetype": filetype})
 
             response = sorted(response, key = lambda i: i["similarity"])
             #print(response)
