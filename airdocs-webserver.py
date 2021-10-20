@@ -123,6 +123,9 @@ class S(BaseHTTPRequestHandler):
             q_signature = q_signature[list(q_signature.keys())[0]]
             q_sim_threshold = float(parsed["threshold"])
 
+            if q_sim_threshold > 1:
+                q_sim_threshold = 1
+
             precalculate_fingerprints(q_signature)
             for d in db:
                 if d != "count":
