@@ -9,9 +9,11 @@ import os.path
 from os.path import isfile, join
 import shelve
 from compare_signatures import *
+from compare_signatures_ble import *
 import zlib
 import uuid 
 import shutil
+import copy
 
 db_name = "airdocs"
 
@@ -123,15 +125,23 @@ class S(BaseHTTPRequestHandler):
             q_signature = q_signature[list(q_signature.keys())[0]]
             q_sim_threshold = float(parsed["threshold"])
 
-            if q_sim_threshold > 1:
-                q_sim_threshold = 1
+            #if q_sim_threshold > 1:
+            #    q_sim_threshold = 1
+            
 
+            #precalculate_fingerprints_ble(q_signature)
             precalculate_fingerprints(q_signature)
             for d in db:
                 if d != "count":
-                    precalculate_fingerprints(db[d]["signature"])
-                    similarity = compare_fingerprints(q_signature, db[d]["signature"])
-                    if similarity < q_sim_threshold:
+                    #print("----------")
+                    db_signature = copy.deepcopy(db[d]["signature"])
+                    #print(db_signature["comment"])
+                    #precalculate_fingerprints_ble(db_signature)
+                    #similarity = compare_fingerprints_ble(q_signature, db_signature)
+                    precalculate_fingerprints(db_signature)
+                    similarity = compare_fingerprints(q_signature, db_signature)
+                    #print(similarity)
+                    if similarity <= q_sim_threshold:
                         document = db[d]["document"]
                         description = db[d]["signature"]["comment"]
                         filetype = db[d]["filetype"]
