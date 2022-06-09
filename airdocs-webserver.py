@@ -14,8 +14,11 @@ import zlib
 import uuid 
 import shutil
 import copy
+from signal import *
 
 db_name = "airdocs"
+global has_db_been_closed
+db = None
 
 class S(BaseHTTPRequestHandler):
     def _set_headers(self):
@@ -48,7 +51,10 @@ class S(BaseHTTPRequestHandler):
         return key
         
     def do_POST(self):
-        db = shelve.open(db_name, writeback=True)
+        global has_db_been_closed
+        global db
+        if has_db_been_closed:
+            db = shelve.open(db_name, writeback=True)
         content_len = int(self.headers.get('Content-Length'))
         post_body = self.rfile.read(content_len)
         parsed = json.loads(post_body)
@@ -68,7 +74,10 @@ class S(BaseHTTPRequestHandler):
             devId = db[id]["signature"]["devId"]
             if (devId == parsed["devid"]):
                 print("deleting " + id)
-                del db[id]
+                try:
+                    del db[id]
+                finally:
+                    db["count"] -= 1
                 full_path = "storage/" + id + "/"
                 if os.path.exists(full_path):
                     try:
@@ -127,6 +136,8 @@ class S(BaseHTTPRequestHandler):
 
             #if q_sim_threshold > 1:
             #    q_sim_threshold = 1
+
+            #print(q_signature)
             
 
             #precalculate_fingerprints_ble(q_signature)
@@ -167,15 +178,42 @@ class S(BaseHTTPRequestHandler):
             response = sorted(response, key = lambda i: i["similarity"])
             #print(response)
             self.wfile.write(json.dumps(response).encode(encoding='utf_8'))
-        db.close()
+        cleanup_db(self, db, "")
 
 
+def cleanup_db(self, db, err_msg):
+    #if len(err_msg) > 0:
+    #    self.send_response(HTTPStatus.BAD_REQUEST)
+    #    self.send_header("Content-type", "text/html")
+    #    self.end_headers()
+    #    self.wfile.write(self._html("Cannot process request data: " + err_msg))
+    global has_db_been_closed
+    db.close()
+    #print("", flush=True) # h@ck! for docker not printing stdout
+    has_db_been_closed = True
+
+
+def handler(signal_received, frame):
+   # Handle any cleanup here
+   global has_db_been_closed
+   global db
+   print('Got signal %d. Exiting gracefully.' % (signal_received))
+   if db is not None and has_db_been_closed == False:
+       db.close()
+       has_db_been_closed = True
+   exit(1)
 
 def run(server_class=HTTPServer, handler_class=S, addr="localhost", port=8000, filename=None, dir=None, config=None):
+    global db
+    global has_db_been_closed
+    has_db_been_closed  = False
     db = shelve.open(db_name, writeback = True)
+
     if not 'count' in db:
         db['count'] = 0
         db.close()
+        has_db_been_closed = True
+
     if filename!=None:
         open_json(filename)
     if dir!=None:
@@ -226,6 +264,9 @@ def open_config(config):
             line = fp.readline()
 
 if __name__ == "__main__":
+
+    signal(SIGINT, handler)
+    signal(SIGTERM, handler)
 
     parser = argparse.ArgumentParser(description="Run a simple HTTP server")
     parser.add_argument(
